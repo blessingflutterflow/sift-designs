@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sift — App Screen Flow v3</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+:root{--o:#fe7c20;--k:#111;--gr:#f5f5f5;--bd:#e8e8e8;--sub:#999;}
+
+/* Phone frame chrome */
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:90px;height:24px;background:#111;border-radius:0 0 16px 16px;z-index:50;}
+.phone::after{content:'';position:absolute;bottom:10px;left:50%;transform:translateX(-50%);width:110px;height:4px;background:#333;border-radius:2px;z-index:50;}
+
+body{
+  background:#161616;
+  font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+  min-height:100vh;padding:32px 0 60px;overflow-x:hidden;
+}
+
+/* ── Header ── */
+.hdr{text-align:center;margin-bottom:28px;padding:0 20px;}
+.hdr-logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:6px;}
+.logo-box{width:44px;height:44px;background:var(--o);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:900;color:#fff;font-style:italic;box-shadow:0 4px 20px rgba(254,124,32,.45);}
+.logo-txt{font-size:30px;font-weight:900;color:#fff;font-style:italic;letter-spacing:-1px;}
+.hdr-sub{font-size:12px;color:#777;letter-spacing:1px;text-transform:uppercase;font-weight:600;}
+
+/* ── Section label ── */
+.sec{text-align:center;color:#444;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:32px 0 10px;padding:0 20px;}
+.sec span{background:#222;padding:6px 16px;border-radius:20px;border:1px solid #2e2e2e;}
+
+/* ── Scroll row ── */
+.swipe{display:none;text-align:center;font-size:11px;color:#3a3a3a;margin-bottom:10px;}
+@media(max-width:900px){.swipe{display:block;}}
+
+.row{display:flex;gap:40px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;padding:8px 40px 28px;scrollbar-width:none;}
+.row::-webkit-scrollbar{display:none;}
+@media(min-width:1600px){.row{justify-content:center;flex-wrap:wrap;overflow-x:visible;}}
+
+/* ── Phone ── */
+.pw{display:flex;flex-direction:column;align-items:center;flex-shrink:0;scroll-snap-align:center;}
+.slbl{font-size:11px;color:#666;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;text-align:center;}
+.phone{width:300px;height:650px;border-radius:48px;overflow:hidden;position:relative;background:#fff;border:10px solid #111;box-shadow:0 0 0 1px #333,0 32px 80px rgba(0,0,0,.7);display:flex;flex-direction:column;}
+@media(max-width:600px){.phone{width:82vw;height:calc(82vw*2.167);max-height:82vh;border-radius:calc(82vw*.16);}}
+
+/* ── Status bar ── */
+.sb{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 6px;flex-shrink:0;z-index:5;position:relative;}
+.sb-d{color:#111;}.sb-l{color:#fff;}
+.sb-t{font-size:13px;font-weight:700;}
+.sb-r{display:flex;align-items:center;gap:5px;}
+
+/* ── Notification banner ── */
+.nb{background:rgba(195,195,200,.94);backdrop-filter:blur(12px);border-radius:16px;margin:0 8px 8px;padding:10px 12px 10px 10px;display:flex;align-items:flex-start;gap:9px;flex-shrink:0;}
+.nb-icon{width:30px;height:30px;border-radius:8px;background:var(--o);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;font-weight:900;color:#fff;font-style:italic;}
+.nb-body{flex:1;}
+.nb-top{display:flex;justify-content:space-between;}
+.nb-app{font-size:10px;font-weight:700;color:#333;}
+.nb-ts{font-size:10px;color:#999;}
+.nb-msg{font-size:11px;color:#333;line-height:1.35;margin-top:1px;}
+
+/* ── Layout helpers ── */
+.sc{display:flex;flex-direction:column;flex:1;overflow:hidden;}
+.f1{flex:1;}
+
+/* ── Nav ── */
+.nav{display:flex;align-items:center;padding:2px 16px 10px;}
+.bk{width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.nav-title{font-size:16px;font-weight:700;color:#111;flex:1;text-align:center;}
+
+/* ── Type ── */
+.pg-h{font-size:22px;font-weight:700;color:#111;padding:0 20px;margin-bottom:6px;line-height:1.25;}
+.pg-s{font-size:13px;color:#777;padding:0 20px;margin-bottom:18px;line-height:1.4;}
+
+/* ── Fields ── */
+.fld{margin:0 20px 10px;border:2px solid var(--bd);border-radius:12px;padding:10px 12px;background:#f9f9f9;position:relative;}
+.fld.on{border-color:var(--o);background:#fff;}
+.fl{font-size:10px;color:#aaa;display:block;margin-bottom:2px;}
+.fv{font-size:14px;font-weight:500;color:#111;}
+.fp{font-size:14px;color:#ccc;}
+.cur{display:inline-block;width:1.5px;height:15px;background:var(--o);vertical-align:middle;margin-left:1px;animation:bl 1s step-end infinite;}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+.fcl{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:20px;height:20px;background:#ccc;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.fhint{font-size:11px;color:#bbb;text-align:center;margin:0 20px 8px;}
+
+/* ── Phone input row ── */
+.ph-row{display:flex;gap:8px;align-items:stretch;margin:0 20px 10px;}
+.flag-btn{display:flex;align-items:center;gap:5px;border:2px solid var(--bd);border-radius:12px;padding:0 10px;background:#f9f9f9;font-size:13px;font-weight:600;color:#111;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.flag-btn.on{border-color:var(--o);background:#fff;}
+.ph-in{flex:1;border:2px solid var(--o);border-radius:12px;padding:10px 12px;background:#fff;}
+
+/* ── Radio options ── */
+.opt{display:flex;align-items:flex-start;gap:10px;padding:10px 20px;border-bottom:1px solid #f5f5f5;}
+.opt-lbl{font-size:13px;font-weight:600;color:#111;}
+.opt-sub{font-size:11px;color:#bbb;margin-top:2px;line-height:1.3;}
+.radio{width:20px;height:20px;border-radius:50%;border:2px solid #ddd;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;}
+.radio.on{border-color:var(--o);background:var(--o);}
+.radio.on::after{content:'';width:8px;height:8px;border-radius:50%;background:#fff;}
+
+/* ── OTP ── */
+.otp-row{display:flex;gap:8px;padding:0 20px;margin-bottom:10px;}
+.otp-box{flex:1;height:52px;border:2px solid #eee;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;background:#fff;}
+.otp-box.on{border-color:var(--o);background:#fff7f2;}
+.resend{font-size:12px;color:#bbb;padding:0 20px;margin-bottom:10px;}
+.resend b{color:var(--o);}
+.autofill{border:1px solid #e8e8e8;border-radius:10px;padding:8px 12px;margin:0 20px 8px;background:#fafafa;}
+.af-from{font-size:10px;color:#999;margin-bottom:2px;}
+.af-code{font-size:20px;font-weight:700;color:#111;}
+
+/* ── Buttons ── */
+.btn{display:block;background:var(--o);color:#fff;font-size:15px;font-weight:700;border:none;border-radius:30px;padding:13px;width:calc(100% - 40px);margin:0 20px;cursor:pointer;text-align:center;}
+.btn-g{display:block;background:#f0f0f0;color:#111;font-size:15px;font-weight:700;border:none;border-radius:30px;padding:13px;width:calc(100% - 40px);margin:0 20px;cursor:pointer;text-align:center;}
+.btn-cancel{background:none;border:none;font-size:15px;color:var(--o);font-weight:500;cursor:pointer;padding:0;}
+.soc{display:flex;align-items:center;justify-content:center;gap:10px;background:#fff;border:1.5px solid var(--bd);border-radius:30px;padding:12px 16px;font-size:14px;font-weight:600;color:#111;width:calc(100% - 40px);margin:0 20px 10px;cursor:pointer;}
+.or-d{display:flex;align-items:center;gap:10px;padding:0 20px;margin:4px 0 10px;font-size:12px;color:#ccc;}
+.or-d::before,.or-d::after{content:'';flex:1;height:1px;background:#eee;}
+.g-circle{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;margin:0 auto;}
+.sift-mini{width:34px;height:34px;background:var(--o);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;}
+.sift-mini span{font-size:20px;font-weight:900;color:#fff;font-style:italic;}
+.consent{font-size:10px;color:#bbb;text-align:center;margin:6px 20px;line-height:1.4;}
+.consent a{color:#888;text-decoration:underline;}
+
+/* ── Numpad ── */
+.np{flex-shrink:0;}
+.np-row{display:flex;}
+.npk{flex:1;border:.5px solid #888;background:#d1d5db;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;}
+.npk.w{background:#fff;}
+.npk .n{font-size:22px;font-weight:300;color:#111;line-height:1;}
+.npk .a{font-size:8px;color:#666;letter-spacing:1px;}
+
+/* ── QWERTY ── */
+.kb{background:#d1d5db;padding:5px 3px 6px;flex-shrink:0;}
+.kb-s{display:flex;border-bottom:1px solid #b8bcc4;margin-bottom:5px;}
+.ks{flex:1;text-align:center;padding:5px 2px;font-size:13px;color:#111;border-right:1px solid #b8bcc4;}
+.ks:last-child{border-right:none;}
+.kb-r{display:flex;gap:5px;padding:0 3px;margin-bottom:5px;justify-content:center;}
+.k{flex:1;max-width:28px;background:#fff;border-radius:5px;height:42px;min-width:0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:400;color:#111;box-shadow:0 1px 0 #888;cursor:pointer;}
+.k.sp{background:#adb4bc;max-width:none;flex:1.5;font-size:12px;font-weight:600;}
+.k.spc{background:#fff;max-width:none;flex:4;font-size:14px;}
+.k.ret{background:#adb4bc;max-width:none;flex:1.5;font-size:12px;font-weight:600;}
+.k.done{background:#007aff;color:#fff;max-width:none;flex:1.5;font-size:12px;font-weight:600;}
+.kb-bot{display:flex;gap:5px;padding:0 3px;}
+
+/* ── Payment ── */
+.pay-row{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid #f5f5f5;cursor:pointer;}
+.pay-ic{width:38px;height:28px;border:1.5px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#111;margin-right:14px;flex-shrink:0;background:#fff;}
+.pay-plus{width:38px;height:28px;display:flex;align-items:center;justify-content:center;margin-right:14px;}
+.pay-lbl{flex:1;font-size:15px;font-weight:500;color:#111;}
+.pay-chev{color:#ccc;font-size:18px;}
+
+/* ── Card ── */
+.card-in{border:2px solid var(--o);border-radius:12px;padding:10px 12px;margin:0 20px 10px;display:flex;align-items:center;gap:10px;background:#fff;position:relative;}
+.card-in-g{border:2px solid #eee;border-radius:12px;padding:10px 12px;background:#f9f9f9;flex:1;}
+.card-row2{display:flex;gap:10px;margin:0 20px 10px;}
+.card-note{font-size:11px;color:#888;line-height:1.4;padding:0 20px;margin-bottom:12px;}
+.card-note a{color:var(--o);}
+
+/* ── SA flag mini ── */
+.za-flag{width:22px;height:15px;display:inline-flex;flex-direction:column;border-radius:2px;overflow:hidden;vertical-align:middle;margin-right:4px;border:0.5px solid #ddd;}
+.za-flag .t{flex:1;background:#007A4D;}
+.za-flag .m{flex:1;position:relative;background:#fff;}
+.za-flag .m::before{content:'';position:absolute;inset:0;background:linear-gradient(to right,#FFB81C 0%,#FFB81C 40%,transparent 40%,transparent 100%);}
+.za-flag .b{flex:1;background:#DE3831;}
+
+/* ── Home screen ── */
+.ride-tabs{display:flex;gap:8px;margin-bottom:12px;}
+.ride-tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 6px;border-radius:14px;background:#f5f5f5;border:2px solid transparent;cursor:pointer;transition:all .2s;}
+.ride-tab.on{background:#fff7f2;border-color:var(--o);}
+.ride-tab .rt-lbl{font-size:12px;font-weight:600;color:#888;}
+.ride-tab.on .rt-lbl{color:var(--o);}
+.ride-tab i{font-size:26px;color:#bbb;}
+.ride-tab.on i{color:var(--o);}
+
+.where-bar{display:flex;align-items:center;gap:10px;background:#f5f5f5;border-radius:14px;padding:12px 14px;}
+.where-txt{font-size:15px;font-weight:700;color:#111;flex:1;}
+.sched-btn{width:44px;height:44px;background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.1);display:flex;align-items:center;justify-content:center;}
+.sched-btn i{font-size:20px;color:#555;}
+
+.sug-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #f5f5f5;}
+.sug-row:last-child{border-bottom:none;}
+.sug-ic{width:34px;height:34px;background:#f5f5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sug-ic i{font-size:16px;color:#888;}
+.sug-lbl{font-size:13px;font-weight:600;color:#111;}
+.sug-sub{font-size:11px;color:#bbb;margin-top:1px;}
+
+/* ── Route search ── */
+.route-origin{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f5f5f5;border-radius:12px;margin:0 16px 8px;}
+.origin-dot{width:12px;height:12px;background:#7b7eff;border-radius:50%;flex-shrink:0;}
+.origin-txt{font-size:14px;font-weight:500;color:#111;}
+.dest-field{display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--o);border-radius:12px;margin:0 16px;background:#fff;}
+.dest-field i{font-size:18px;color:#aaa;}
+.dest-input{flex:1;font-size:14px;color:#bbb;}
+.map-badge{background:#7b7eff;color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;display:flex;align-items:center;gap:4px;}
+.map-badge i{font-size:14px;}
+.pin-toggle{width:28px;height:28px;background:#f5f5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.pin-toggle i{font-size:14px;color:#7b7eff;}
+
+.dest-list{padding:0 16px;margin-top:10px;}
+.dest-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #f5f5f5;}
+.dest-item:last-child{border-bottom:none;}
+.dest-ic{width:32px;height:32px;background:#f5f5f5;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dest-ic i{font-size:16px;color:#888;}
+.dest-lbl{font-size:13px;font-weight:600;color:#111;line-height:1.3;}
+.dest-sub{font-size:11px;color:#bbb;margin-top:1px;}
+
+/* ── Routing map (CSS based) ── */
+.route-map{flex:1;position:relative;overflow:hidden;background:#e8eaf0;}
+.rm-bg{position:absolute;inset:0;background:linear-gradient(135deg,#dde3f0 0%,#e8ecf5 50%,#d8e0ef 100%);}
+.rm-road-h{position:absolute;background:rgba(255,255,255,.85);height:5px;}
+.rm-road-v{position:absolute;background:rgba(255,255,255,.85);width:5px;}
+.rm-road-d{position:absolute;background:rgba(255,255,255,.7);height:3px;transform-origin:left center;}
+.rm-block{position:absolute;background:rgba(200,208,225,.5);border-radius:3px;}
+.rm-route{position:absolute;border:none;stroke-width:4;}
+.pin-origin{position:absolute;width:14px;height:14px;background:#7b7eff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.pin-dest{position:absolute;}
+.pin-dest-inner{width:14px;height:14px;background:var(--o);border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);}
+.pin-dest-tail{width:2px;height:8px;background:var(--o);margin:0 auto;}
+.rm-back{position:absolute;top:12px;left:12px;width:36px;height:36px;background:#fff;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer;}
+.rm-back i{font-size:20px;color:#111;}
+.rm-locate{position:absolute;bottom:12px;right:12px;width:36px;height:36px;background:#fff;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;z-index:5;cursor:pointer;}
+.rm-locate i{font-size:18px;color:#555;}
+
+/* ── ETA badge ── */
+.eta-badge{position:absolute;background:var(--o);color:#fff;font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;}
+
+/* ── Bottom sheets ── */
+.bs{background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 16px;box-shadow:0 -4px 24px rgba(0,0,0,.08);flex-shrink:0;}
+.bs-handle{width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 12px;}
+.bs-title{font-size:18px;font-weight:800;color:#111;margin-bottom:4px;}
+.bs-sub{font-size:12px;color:#bbb;margin-bottom:12px;}
+
+/* ── Destination confirm card ── */
+.dest-confirm{padding:14px 16px;background:#f9f9f9;border-radius:14px;margin-bottom:12px;}
+.dc-title{font-size:16px;font-weight:800;color:#111;margin-bottom:2px;}
+.dc-addr{font-size:12px;color:#bbb;margin-bottom:6px;}
+.dc-price{font-size:13px;color:#888;}
+.dc-price b{color:#111;}
+
+/* ── Ride card ── */
+.ride-card{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;margin-bottom:10px;cursor:pointer;border:2px solid transparent;}
+.ride-card.sel{background:#fff7f2;border-color:var(--o);}
+.ride-card:not(.sel){background:#fff;border-color:#f0f0f0;}
+.rc-icon{width:56px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.rc-icon i{font-size:32px;color:#555;}
+.rc-icon.sel-ic i{color:var(--o);}
+.rc-icon img{width:56px;height:40px;object-fit:contain;}
+.rc-badge{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:4px;}
+.rc-info{flex:1;}
+.rc-name{font-size:14px;font-weight:700;color:#111;}
+.rc-meta{font-size:11px;color:#bbb;display:flex;align-items:center;gap:6px;margin-top:2px;}
+.rc-meta i{font-size:12px;}
+.rc-price{font-size:15px;font-weight:700;color:#111;}
+
+/* ── Ride list (expanded) ── */
+.rl-item{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #f5f5f5;cursor:pointer;}
+.rl-item:last-child{border-bottom:none;}
+.rl-item.sel{background:#fff7f2;}
+.rl-ic{width:56px;height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;}
+.rl-ic i{font-size:30px;color:#555;}
+.rl-ic img{width:56px;height:40px;object-fit:contain;}
+.rl-badge{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-right:6px;flex-shrink:0;}
+.rl-info{flex:1;}
+.rl-name{font-size:14px;font-weight:700;color:#111;}
+.rl-meta{font-size:11px;color:#bbb;display:flex;align-items:center;gap:4px;margin-top:2px;}
+.rl-meta i{font-size:12px;}
+.rl-price{font-size:14px;font-weight:700;color:#111;text-align:right;}
+
+/* ── Select ride footer ── */
+.sel-footer{padding:12px 16px 8px;border-top:1px solid #f5f5f5;}
+.pay-method{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.pm-ic{font-size:16px;color:#555;}
+.pm-txt{font-size:12px;color:#555;}
+.pm-txt b{color:#111;}
+.pm-chev i{font-size:14px;color:#ccc;}
+.sel-btns{display:flex;gap:8px;}
+.sel-btn-main{flex:1;background:var(--o);color:#fff;font-size:14px;font-weight:700;border:none;border-radius:30px;padding:13px;cursor:pointer;}
+.sel-btn-sched{width:48px;height:48px;background:var(--o);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
+.sel-btn-sched i{font-size:22px;color:#fff;}
+
+/* ── Payment screen ── */
+.pmt-balance{background:#fff7f2;border-radius:14px;padding:14px 16px;margin:0 20px 4px;}
+.pmt-bal-lbl{font-size:12px;color:#888;margin-bottom:4px;}
+.pmt-bal-amt{font-size:28px;font-weight:800;color:#111;}
+.pmt-section{font-size:15px;font-weight:700;color:#111;padding:14px 20px 6px;}
+.pmt-row{display:flex;align-items:center;padding:14px 20px;border-bottom:1px solid #f5f5f5;cursor:pointer;}
+.pmt-row-ic{width:36px;height:36px;border:1.5px solid #ddd;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-right:14px;flex-shrink:0;}
+.pmt-row-ic i{font-size:18px;color:#555;}
+.pmt-row-lbl{flex:1;font-size:15px;color:#111;}
+.pmt-row-chev i{font-size:18px;color:#ccc;}
+.pmt-check{width:28px;height:28px;background:var(--o);border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.pmt-check i{font-size:16px;color:#fff;}
+.pmt-done{background:none;border:none;font-size:15px;color:var(--o);font-weight:600;cursor:pointer;padding:0;}
+
+/* ── Toast ── */
+.toast{background:rgba(20,20,20,.88);backdrop-filter:blur(6px);border-radius:14px;padding:12px 16px;font-size:13px;color:#fff;font-weight:500;line-height:1.4;}
+
+/* ── OTP overlay ── */
+.otp-modal{background:#fff;border-radius:16px;padding:18px 16px 0;margin:0 12px;box-shadow:0 8px 40px rgba(0,0,0,.3);position:absolute;bottom:160px;left:0;right:0;z-index:15;text-align:center;}
+.nm-title{font-size:14px;font-weight:700;color:#111;margin-bottom:6px;}
+.nm-sub{font-size:11px;color:#777;line-height:1.4;margin-bottom:14px;}
+.nm-btns{display:flex;border-top:1px solid #e8e8e8;margin:0 -16px;overflow:hidden;}
+.nm-btn{flex:1;padding:12px;font-size:14px;font-weight:500;border:none;background:none;cursor:pointer;color:#007aff;}
+.nm-btn.allow{font-weight:700;border-left:1px solid #e8e8e8;}
+
+/* leaflet overrides inside phone */
+.leaflet-control-attribution,.leaflet-control-zoom{display:none!important;}
+#sift-map,#map-s12,#map-s13,#map-s14{background:#e8ecf5!important;}
+.leaflet-container{background:#e8ecf5!important;}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <div class="logo-box">S</div>
+    <div class="logo-txt">ift</div>
+  </div>
+  <div class="hdr-sub">App Screen Flow — Client Preview</div>
+</div>
+
+<!-- ══════════════ SECTION: ONBOARDING ══════════════ -->
+<div class="sec"><span>Onboarding Flow</span></div>
+<div class="swipe">← swipe through screens →</div>
+
+<div class="row">
+
+<!-- S1 · Splash -->
+<div class="pw">
+<div class="slbl">1 · Enter Number</div>
+<div class="phone" style="background:var(--o);">
+  <div class="sb sb-l">
+    <span class="sb-t">2:05</span>
+    <div class="sb-r">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="white"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="white"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="white"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="white" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="white"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.5C5.8 2.5 3.8 3.4 2.3 4.8L1 3.5C2.9 1.6 5.3.5 8 .5s5.1 1.1 7 3L13.7 4.8C12.2 3.4 10.2 2.5 8 2.5z" fill="white"/><path d="M8 6C6.4 6 4.9 6.6 3.8 7.6L2.5 6.3C3.9 5 5.9 4.2 8 4.2s4.1.8 5.5 2.1L12.2 7.6C11.1 6.6 9.6 6 8 6z" fill="white"/><circle cx="8" cy="10.5" r="1.8" fill="white"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="white" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="white"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="white"/></svg>
+    </div>
+  </div>
+  <div class="sc" style="padding:16px 20px 20px;">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+      <div style="font-size:56px;font-weight:900;color:#fff;font-style:italic;letter-spacing:-3px;text-shadow:0 4px 20px rgba(0,0,0,.2);">Sift<span style="display:inline-block;width:9px;height:9px;background:#fff;border-radius:50%;margin-left:2px;vertical-align:bottom;margin-bottom:8px;"></span></div>
+    </div>
+    <div>
+      <div style="font-size:20px;font-weight:700;color:#fff;text-align:center;margin-bottom:10px;">Enter your number</div>
+      <div class="ph-row" style="margin:0 0 14px;">
+        <button class="flag-btn on" style="border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);color:#fff;gap:6px;">
+          <span style="font-size:15px;">🇿🇦</span> +27 <i class="ph ph-caret-down" style="font-size:11px;"></i>
+        </button>
+        <div class="ph-in" style="border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.2);display:flex;align-items:center;">
+          <span style="font-size:15px;color:rgba(255,255,255,.55);">Phone number</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.25);"></div>
+        <span style="font-size:12px;color:rgba(255,255,255,.5);font-weight:500;">OR</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.25);"></div>
+      </div>
+      <button style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);border-radius:30px;padding:12px 16px;font-size:14px;font-weight:600;color:#fff;width:100%;cursor:pointer;margin-bottom:10px;">
+        <i class="ph-bold ph-apple-logo" style="font-size:18px;"></i> Continue with Apple
+      </button>
+      <button style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.4);border-radius:30px;padding:12px 16px;font-size:14px;font-weight:600;color:#fff;width:100%;cursor:pointer;margin-bottom:10px;">
+        <i class="ph-bold ph-google-logo" style="font-size:18px;"></i> Continue with Google
+      </button>
+      <div class="consent" style="color:rgba(255,255,255,.5);">By signing up, you agree to our <a href="#" style="color:rgba(255,255,255,.85);">Terms &amp; Conditions</a> and <a href="#" style="color:rgba(255,255,255,.85);">Privacy Policy</a>.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S2 · Verify Method -->
+<div class="pw">
+<div class="slbl">2 · Verify Method</div>
+<div class="phone">
+  <div class="sb sb-d">
+    <span class="sb-t">2:05</span>
+    <div class="sb-r">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.5C5.8 2.5 3.8 3.4 2.3 4.8L1 3.5C2.9 1.6 5.3.5 8 .5s5.1 1.1 7 3L13.7 4.8C12.2 3.4 10.2 2.5 8 2.5z" fill="#111"/><path d="M8 6C6.4 6 4.9 6.6 3.8 7.6L2.5 6.3C3.9 5 5.9 4.2 8 4.2s4.1.8 5.5 2.1L12.2 7.6C11.1 6.6 9.6 6 8 6z" fill="#111"/><circle cx="8" cy="10.5" r="1.8" fill="#111"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg>
+    </div>
+  </div>
+  <div class="sc">
+    <div class="nav" style="padding-bottom:8px;">
+      <div class="bk"><i class="ph-bold ph-arrow-left" style="font-size:20px;color:#111;"></i></div>
+    </div>
+    <div style="font-size:14px;color:#555;padding:0 20px;margin-bottom:16px;line-height:1.4;">We'll send a code for verification.</div>
+    <div class="ph-row">
+      <button class="flag-btn on" style="gap:6px;">
+        <span style="font-size:15px;">🇿🇦</span> +27 <i class="ph ph-caret-down" style="font-size:11px;"></i>
+      </button>
+      <div class="ph-in" style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:14px;font-weight:500;color:#111;">0821234567</span>
+        <div class="fcl" style="position:static;transform:none;"><i class="ph ph-x" style="font-size:11px;color:#fff;"></i></div>
+      </div>
+    </div>
+    <div class="opt">
+      <div style="width:28px;height:28px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><i class="ph ph-chat-teardrop-text" style="font-size:16px;color:#555;"></i></div>
+      <div style="flex:1;"><div class="opt-lbl">Get a code via SMS</div><div class="opt-sub">Standard text messaging rates may apply.</div></div>
+      <div class="radio on"></div>
+    </div>
+    <div class="opt">
+      <div style="width:28px;height:28px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;"><i class="ph ph-whatsapp-logo" style="font-size:16px;color:#25d366;"></i></div>
+      <div style="flex:1;"><div class="opt-lbl">Get a code via WhatsApp</div><div class="opt-sub">Sift will not send you anything else without your consent.</div></div>
+      <div class="radio"></div>
+    </div>
+    <div class="consent">Sift will not send anything without your consent.</div>
+    <div class="f1"></div>
+    <button class="btn" style="margin-bottom:12px;">Continue</button>
+    <div class="np">
+      <div class="np-row"><div class="npk w"><span class="n">1</span></div><div class="npk w"><span class="n">2</span><span class="a">ABC</span></div><div class="npk w"><span class="n">3</span><span class="a">DEF</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">4</span><span class="a">GHI</span></div><div class="npk w"><span class="n">5</span><span class="a">JKL</span></div><div class="npk w"><span class="n">6</span><span class="a">MNO</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">7</span><span class="a">PQRS</span></div><div class="npk w"><span class="n">8</span><span class="a">TUV</span></div><div class="npk w"><span class="n">9</span><span class="a">WXYZ</span></div></div>
+      <div class="np-row"><div class="npk"><span class="n" style="font-size:13px;"># ⁎</span></div><div class="npk w"><span class="n">0</span></div><div class="npk"><i class="ph ph-backspace" style="font-size:20px;color:#555;"></i></div></div>
+      <div style="background:#d1d5db;height:10px;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S3 · OTP + Notification modal -->
+<div class="pw">
+<div class="slbl">3 · OTP + Permission</div>
+<div class="phone" style="position:relative;">
+  <div class="sb" style="background:rgba(0,0,0,.45);color:#fff;position:relative;z-index:6;">
+    <span class="sb-t">2:06</span>
+    <div class="sb-r">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="white"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="white"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="white"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="white" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="white"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.5C5.8 2.5 3.8 3.4 2.3 4.8L1 3.5C2.9 1.6 5.3.5 8 .5s5.1 1.1 7 3L13.7 4.8C12.2 3.4 10.2 2.5 8 2.5z" fill="white"/><path d="M8 6C6.4 6 4.9 6.6 3.8 7.6L2.5 6.3C3.9 5 5.9 4.2 8 4.2s4.1.8 5.5 2.1L12.2 7.6C11.1 6.6 9.6 6 8 6z" fill="white"/><circle cx="8" cy="10.5" r="1.8" fill="white"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="white" stroke-width="1.2"/><rect x="1.5" y="2.5" width="12" height="7" rx="1" fill="white"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="white"/></svg>
+    </div>
+  </div>
+  <div style="padding:10px 20px;position:relative;z-index:2;">
+    <div style="font-size:22px;font-weight:700;color:#111;margin-bottom:6px;">Enter the code</div>
+    <div style="font-size:13px;color:#888;margin-bottom:16px;">A code was sent to <b style="color:#111;">+27 082 ███ ████</b></div>
+    <div class="otp-row"><div class="otp-box on"></div><div class="otp-box"></div><div class="otp-box"></div><div class="otp-box"></div></div>
+    <div class="resend">Resend code in <b>19</b></div>
+  </div>
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:5;"></div>
+  <div class="otp-modal">
+    <div class="nm-title">"Sift" Would Like to Send<br>You Notifications</div>
+    <div class="nm-sub">Notifications may include alerts, sounds, and icon badges. These can be configured in Settings.</div>
+    <div class="nm-btns">
+      <button class="nm-btn">Don't Allow</button>
+      <button class="nm-btn allow">Allow</button>
+    </div>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:4;background:#d1d5db;">
+    <div class="np-row"><div class="npk w"><span class="n">1</span></div><div class="npk w"><span class="n">2</span><span class="a">ABC</span></div><div class="npk w"><span class="n">3</span><span class="a">DEF</span></div></div>
+    <div class="np-row"><div class="npk w"><span class="n">4</span><span class="a">GHI</span></div><div class="npk w"><span class="n">5</span><span class="a">JKL</span></div><div class="npk w"><span class="n">6</span><span class="a">MNO</span></div></div>
+    <div class="np-row"><div class="npk w"><span class="n">7</span><span class="a">PQRS</span></div><div class="npk w"><span class="n">8</span><span class="a">TUV</span></div><div class="npk w"><span class="n">9</span><span class="a">WXYZ</span></div></div>
+    <div class="np-row"><div class="npk"></div><div class="npk w"><span class="n">0</span></div><div class="npk"><i class="ph ph-backspace" style="font-size:20px;color:#555;"></i></div></div>
+    <div style="height:10px;"></div>
+  </div>
+</div>
+</div>
+
+<!-- S4 · OTP Autofill -->
+<div class="pw">
+<div class="slbl">4 · OTP Autofill</div>
+<div class="phone">
+  <div class="nb" style="margin-top:8px;">
+    <div class="nb-icon">S</div>
+    <div class="nb-body">
+      <div class="nb-top"><span class="nb-app">Sift</span><span class="nb-ts">now</span></div>
+      <div class="nb-msg">3045 is your Sift security code. Do not share this code with anyone.</div>
+    </div>
+  </div>
+  <div class="sb sb-d" style="padding-top:4px;">
+    <span class="sb-t">2:06</span>
+    <div class="sb-r">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.5C5.8 2.5 3.8 3.4 2.3 4.8L1 3.5C2.9 1.6 5.3.5 8 .5s5.1 1.1 7 3L13.7 4.8C12.2 3.4 10.2 2.5 8 2.5z" fill="#111"/><path d="M8 6C6.4 6 4.9 6.6 3.8 7.6L2.5 6.3C3.9 5 5.9 4.2 8 4.2s4.1.8 5.5 2.1L12.2 7.6C11.1 6.6 9.6 6 8 6z" fill="#111"/><circle cx="8" cy="10.5" r="1.8" fill="#111"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg>
+    </div>
+  </div>
+  <div class="sc" style="padding-top:10px;">
+    <div style="font-size:22px;font-weight:700;color:#111;padding:0 20px;margin-bottom:6px;">Enter the code</div>
+    <div style="font-size:13px;color:#888;padding:0 20px;margin-bottom:14px;">A code was sent to <b style="color:#111;">+27 082 ███ ████</b></div>
+    <div class="otp-row"><div class="otp-box on"></div><div class="otp-box"></div><div class="otp-box"></div><div class="otp-box"></div></div>
+    <div class="resend">Resend code in <b>15</b></div>
+    <div class="autofill"><div class="af-from">From Messages</div><div class="af-code">3045</div></div>
+    <div class="f1"></div>
+    <div class="np">
+      <div class="np-row"><div class="npk w"><span class="n">1</span></div><div class="npk w"><span class="n">2</span><span class="a">ABC</span></div><div class="npk w"><span class="n">3</span><span class="a">DEF</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">4</span><span class="a">GHI</span></div><div class="npk w"><span class="n">5</span><span class="a">JKL</span></div><div class="npk w"><span class="n">6</span><span class="a">MNO</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">7</span><span class="a">PQRS</span></div><div class="npk w"><span class="n">8</span><span class="a">TUV</span></div><div class="npk w"><span class="n">9</span><span class="a">WXYZ</span></div></div>
+      <div class="np-row"><div class="npk"></div><div class="npk w"><span class="n">0</span></div><div class="npk"><i class="ph ph-backspace" style="font-size:20px;color:#555;"></i></div></div>
+      <div style="background:#d1d5db;height:10px;"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S5 · Create Account -->
+<div class="pw">
+<div class="slbl">5 · Create Account</div>
+<div class="phone">
+  <div class="nb" style="margin-top:8px;">
+    <div class="nb-icon">S</div>
+    <div class="nb-body">
+      <div class="nb-top"><span class="nb-app">Sift</span><span class="nb-ts">now</span></div>
+      <div class="nb-msg">3045 is your Sift security code. Do not share this code with anyone.</div>
+    </div>
+  </div>
+  <div class="sb sb-d" style="padding-top:4px;">
+    <span class="sb-t">2:06</span>
+    <div class="sb-r">
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg>
+      <svg width="16" height="12" viewBox="0 0 16 12"><path d="M8 2.5C5.8 2.5 3.8 3.4 2.3 4.8L1 3.5C2.9 1.6 5.3.5 8 .5s5.1 1.1 7 3L13.7 4.8C12.2 3.4 10.2 2.5 8 2.5z" fill="#111"/><path d="M8 6C6.4 6 4.9 6.6 3.8 7.6L2.5 6.3C3.9 5 5.9 4.2 8 4.2s4.1.8 5.5 2.1L12.2 7.6C11.1 6.6 9.6 6 8 6z" fill="#111"/><circle cx="8" cy="10.5" r="1.8" fill="#111"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg>
+    </div>
+  </div>
+  <div class="sc" style="justify-content:center;padding:10px 22px;text-align:center;">
+    <div class="sift-mini" style="margin:0 auto 16px;"><span>S</span></div>
+    <div style="font-size:22px;font-weight:700;color:#111;margin-bottom:8px;text-align:center;">Create an account</div>
+    <div style="font-size:13px;color:#777;margin-bottom:24px;line-height:1.5;text-align:center;">Save time by linking your social account.<br>We will never share any personal data.</div>
+    <button class="soc" style="margin:0 auto 10px;"><i class="ph-bold ph-apple-logo" style="font-size:18px;"></i> Continue with Apple</button>
+    <button class="soc" style="margin:0 auto 10px;"><i class="ph-bold ph-envelope" style="font-size:18px;"></i> Continue with email</button>
+    <div class="or-d" style="margin:4px auto 10px;">OR</div>
+    <div class="g-circle" style="margin:0 auto;">
+      <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S6 · Enter Name -->
+<div class="pw">
+<div class="slbl">6 · Enter Name</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:08</span><div class="sb-r"><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div class="sc">
+    <div class="nav"><div class="bk"><i class="ph-bold ph-arrow-left" style="font-size:20px;color:#111;"></i></div></div>
+    <div class="pg-h">Enter your name</div>
+    <div class="pg-s">Please enter your name as it appears on your ID or passport.</div>
+    <div style="padding:0 20px;">
+      <div class="fld on" style="margin:0 0 12px;"><span class="fl">First name</span><span class="fv"><span class="cur"></span></span></div>
+      <div class="fld" style="margin:0;"><span class="fp">Last name</span></div>
+    </div>
+    <div class="f1"></div>
+    <button class="btn" style="margin-bottom:12px;">Continue</button>
+    <div class="kb">
+      <div class="kb-s"><div class="ks" style="font-weight:600;border-right:none;">THABO NKOSI</div></div>
+      <div class="kb-r"><div class="k">q</div><div class="k">w</div><div class="k">e</div><div class="k">r</div><div class="k">t</div><div class="k">y</div><div class="k">u</div><div class="k">i</div><div class="k">o</div><div class="k">p</div></div>
+      <div class="kb-r"><div style="flex:.5"></div><div class="k">a</div><div class="k">s</div><div class="k">d</div><div class="k">f</div><div class="k">g</div><div class="k">h</div><div class="k">j</div><div class="k">k</div><div class="k">l</div><div style="flex:.5"></div></div>
+      <div class="kb-r"><div class="k sp">⇧</div><div class="k">z</div><div class="k">x</div><div class="k">c</div><div class="k">v</div><div class="k">b</div><div class="k">n</div><div class="k">m</div><div class="k sp">⌫</div></div>
+      <div class="kb-bot"><div class="k sp" style="max-width:none;flex:1.2;">123</div><div class="k sp" style="max-width:none;flex:1.2;"><i class="ph ph-smiley" style="font-size:16px;"></i></div><div class="k spc">space</div><div class="k ret">return</div></div>
+      <div style="padding:5px 6px 3px;display:flex;justify-content:space-between;"><i class="ph ph-globe" style="font-size:20px;color:#555;"></i><i class="ph ph-microphone" style="font-size:20px;color:#555;"></i></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S7 · Location Permission -->
+<div class="pw">
+<div class="slbl">7 · Location Access</div>
+<div class="phone" style="position:relative;background:#b8daf0;">
+  <div class="sb sb-d" style="position:relative;z-index:6;"><span class="sb-t">2:08</span><div class="sb-r"><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div style="position:absolute;inset:0;z-index:1;overflow:hidden;"><div style="position:absolute;inset:0;background:#b8daf0;"></div><div style="position:absolute;top:8%;left:18%;width:30%;height:44%;background:#d4edda;border-radius:20% 30% 15% 25%;border:1px solid #b8d4b8;opacity:.6;"></div><div style="position:absolute;top:18%;left:50%;width:36%;height:48%;background:#d4edda;border-radius:25% 15% 30% 20%;border:1px solid #b8d4b8;opacity:.6;"></div></div>
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:2;"></div>
+  <div style="position:absolute;left:12px;right:12px;top:46%;transform:translateY(-50%);background:#2c2c2e;border-radius:16px;overflow:hidden;z-index:10;">
+    <div style="padding:18px 16px 12px;text-align:center;">
+      <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;">Allow "Sift" to use your location?</div>
+      <div style="font-size:13px;color:#aaa;line-height:1.4;">Your location is used to find the closest drivers to you</div>
+    </div>
+    <div style="height:80px;background:linear-gradient(135deg,#1d4e2a,#2d7a42,#3a9455);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,.8);color:#fff;font-size:9px;font-weight:600;padding:4px 8px;border-radius:12px;display:flex;align-items:center;gap:4px;"><i class="ph ph-navigation-arrow" style="font-size:10px;color:#fff;"></i> Precise: On</div>
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;background:#007aff;border-radius:50%;border:2.5px solid #fff;box-shadow:0 0 0 8px rgba(0,122,255,.25);"></div>
+      <div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:9px;color:#fff;font-weight:700;text-align:right;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,.8);">SANDTON<br>JHB</div>
+    </div>
+    <div style="padding:14px;text-align:center;font-size:15px;color:#0a84ff;border-top:1px solid #3a3a3c;cursor:pointer;">Allow Once</div>
+    <div style="padding:14px;text-align:center;font-size:15px;color:#0a84ff;border-top:1px solid #3a3a3c;cursor:pointer;">Allow While Using App</div>
+    <div style="padding:14px;text-align:center;font-size:15px;color:#0a84ff;border-top:1px solid #3a3a3c;cursor:pointer;">Don't Allow</div>
+  </div>
+</div>
+</div>
+
+<!-- S8 · Set Up Payment -->
+<div class="pw">
+<div class="slbl">8 · Set Up Payment</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:08</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div class="sc" style="padding-top:16px;">
+    <div class="pg-h">Set up payment</div>
+    <div class="pg-s">Pick a preferred payment method for a smoother ride experience.</div>
+    <div class="pay-row"><div class="pay-ic"><i class="ph-bold ph-apple-logo" style="font-size:16px;"></i></div><div class="pay-lbl">Apple Pay</div><div class="pay-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div></div>
+    <div class="pay-row"><div class="pay-plus"><i class="ph-bold ph-plus" style="font-size:20px;color:#888;"></i></div><div class="pay-lbl">Add debit/credit card</div><div class="pay-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div></div>
+    <div class="f1"></div>
+    <button class="btn-g" style="margin-bottom:24px;">Set up later</button>
+  </div>
+</div>
+</div>
+
+<!-- S9 · Add Card -->
+<div class="pw">
+<div class="slbl">9 · Add Card</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:09</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div class="sc">
+    <div class="nav"><button class="btn-cancel">Cancel</button><div class="nav-title">New card</div><div style="width:55px;"></div></div>
+    <div class="card-in">
+      <i class="ph ph-credit-card" style="font-size:26px;color:#666;flex-shrink:0;"></i>
+      <div style="flex:1;"><div style="font-size:11px;color:#999;margin-bottom:2px;">Card number</div><div style="font-size:15px;font-weight:500;color:#111;">4024 0071 6009 6600</div></div>
+      <div class="fcl" style="position:static;transform:none;"><i class="ph ph-x" style="font-size:11px;color:#fff;"></i></div>
+    </div>
+    <div class="card-row2">
+      <div class="card-in-g"><div style="font-size:11px;color:#999;margin-bottom:2px;">Expiry date</div><div style="font-size:15px;font-weight:500;color:#111;">09/28</div></div>
+      <div class="card-in-g"><div style="font-size:11px;color:#999;margin-bottom:2px;">Secure code</div><div style="font-size:15px;font-weight:500;color:#ccc;">···</div></div>
+    </div>
+    <div class="f1"></div>
+    <div class="card-note">Sift may charge a small amount to confirm your card details. This is immediately refunded. <a href="#" style="color:var(--o);">Learn more</a></div>
+    <button class="btn" style="margin-bottom:10px;">Add card</button>
+    <div class="np">
+      <div class="np-row"><div class="npk w"><span class="n">1</span></div><div class="npk w"><span class="n">2</span><span class="a">ABC</span></div><div class="npk w"><span class="n">3</span><span class="a">DEF</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">4</span><span class="a">GHI</span></div><div class="npk w"><span class="n">5</span><span class="a">JKL</span></div><div class="npk w"><span class="n">6</span><span class="a">MNO</span></div></div>
+      <div class="np-row"><div class="npk w"><span class="n">7</span><span class="a">PQRS</span></div><div class="npk w"><span class="n">8</span><span class="a">TUV</span></div><div class="npk w"><span class="n">9</span><span class="a">WXYZ</span></div></div>
+      <div class="np-row"><div class="npk"></div><div class="npk w"><span class="n">0</span></div><div class="npk"><i class="ph ph-backspace" style="font-size:20px;color:#555;"></i></div></div>
+      <div style="background:#d1d5db;padding:5px 6px 8px;"><i class="ph ph-globe" style="font-size:20px;color:#555;"></i></div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- end onboarding row -->
+
+<!-- ══════════════ SECTION: MAIN APP ══════════════ -->
+<div class="sec"><span>Main App Flow</span></div>
+<div class="swipe">← swipe through screens →</div>
+
+<div class="row">
+
+<!-- S10 · Home (Real Leaflet map, Car/Delivery tabs) -->
+<div class="pw">
+<div class="slbl">10 · Home Screen</div>
+<div class="phone" style="position:relative;background:#e8ecf0;">
+  <div class="sb" style="position:absolute;top:0;left:0;right:0;z-index:20;color:#111;">
+    <span class="sb-t">2:09</span>
+    <div class="sb-r">
+      <i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i>
+      <svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg>
+      <svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg>
+    </div>
+  </div>
+  <div id="sift-map" style="position:absolute;inset:0;z-index:1;"></div>
+  <!-- Hamburger -->
+  <div style="position:absolute;top:32px;left:10px;z-index:20;width:36px;height:36px;background:#fff;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+    <i class="ph-bold ph-list" style="font-size:18px;color:#111;"></i>
+  </div>
+  <!-- Toast -->
+  <div class="toast" style="position:absolute;bottom:238px;left:8px;right:8px;z-index:20;">
+    You're all set, Thabo! Happy riding
+  </div>
+  <!-- Bottom sheet -->
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;background:#fff;border-radius:20px 20px 0 0;padding:12px 16px 18px;box-shadow:0 -4px 24px rgba(0,0,0,.1);">
+    <div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 14px;"></div>
+    <!-- Ride type tabs -->
+    <div class="ride-tabs">
+      <div class="ride-tab on">
+        <img src="sift screens/car_orange.png" style="width:46px;height:32px;object-fit:contain;" alt="Ride">
+        <span class="rt-lbl" style="color:var(--o);">Ride</span>
+      </div>
+      <div class="ride-tab">
+        <img src="sift screens/parcel.png" style="width:38px;height:38px;object-fit:contain;opacity:0.45;" alt="Delivery">
+        <span class="rt-lbl">Delivery</span>
+      </div>
+    </div>
+    <!-- Where to bar -->
+    <div class="where-bar">
+      <i class="ph-bold ph-magnifying-glass" style="font-size:18px;color:#111;"></i>
+      <div class="where-txt">Where to?</div>
+      <div class="sched-btn"><i class="ph ph-clock" style="font-size:20px;color:#555;"></i></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S11 · Your Route (Search) -->
+<div class="pw">
+<div class="slbl">11 · Search Destination</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:10</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="17" height="12" viewBox="0 0 17 12"><rect x="0" y="4" width="2.5" height="8" rx=".5" fill="#111"/><rect x="4" y="2.5" width="2.5" height="9.5" rx=".5" fill="#111"/><rect x="8" y="0" width="2.5" height="12" rx=".5" fill="#111"/><rect x="12" y="1" width="5" height="10" rx="1.5" fill="none" stroke="#111" stroke-width="1.2"/><rect x="12" y="1" width="3" height="10" rx=".5" fill="#111"/></svg><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div class="sc" style="padding-top:6px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 16px 10px;">
+      <div style="font-size:16px;font-weight:700;color:#111;">Your route</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <i class="ph-bold ph-x" style="font-size:20px;color:#555;cursor:pointer;"></i>
+        <i class="ph-bold ph-plus" style="font-size:20px;color:#555;cursor:pointer;"></i>
+      </div>
+    </div>
+    <!-- Origin -->
+    <div class="route-origin">
+      <div class="origin-dot"></div>
+      <div class="origin-txt">14 Rivonia Road, Sandton</div>
+    </div>
+    <!-- Destination field -->
+    <div class="dest-field">
+      <i class="ph ph-magnifying-glass" style="font-size:18px;color:#aaa;"></i>
+      <div class="dest-input">Destination<span class="cur"></span></div>
+      <div class="map-badge"><i class="ph-bold ph-map-pin" style="font-size:13px;"></i> Map</div>
+      <div class="pin-toggle"><i class="ph-bold ph-map-pin" style="font-size:14px;color:#7b7eff;"></i></div>
+    </div>
+    <!-- Suggestions -->
+    <div class="dest-list">
+      <div class="dest-item">
+        <div class="dest-ic"><i class="ph ph-airplane" style="font-size:16px;color:#777;"></i></div>
+        <div><div class="dest-lbl">O.R. Tambo International Airport</div><div class="dest-sub">Jones Rd, Kempton Park, Johannesburg</div></div>
+      </div>
+      <div class="dest-item">
+        <div class="dest-ic"><i class="ph ph-map-pin" style="font-size:16px;color:#777;"></i></div>
+        <div><div class="dest-lbl">Sandton City Shopping Centre</div><div class="dest-sub">83 Rivonia Rd, Sandhurst, Sandton</div></div>
+      </div>
+      <div class="dest-item">
+        <div class="dest-ic"><i class="ph ph-airplane" style="font-size:16px;color:#777;"></i></div>
+        <div><div class="dest-lbl">Cape Town International Airport</div><div class="dest-sub">Matroosfontein, Cape Town</div></div>
+      </div>
+    </div>
+    <div class="f1"></div>
+    <!-- Keyboard -->
+    <div class="kb">
+      <div class="kb-r"><div class="k">Q</div><div class="k">W</div><div class="k">E</div><div class="k">R</div><div class="k">T</div><div class="k">Y</div><div class="k">U</div><div class="k">I</div><div class="k">O</div><div class="k">P</div></div>
+      <div class="kb-r"><div style="flex:.5"></div><div class="k">A</div><div class="k">S</div><div class="k">D</div><div class="k">F</div><div class="k">G</div><div class="k">H</div><div class="k">J</div><div class="k">K</div><div class="k">L</div><div style="flex:.5"></div></div>
+      <div class="kb-r"><div class="k sp">⇧</div><div class="k">Z</div><div class="k">X</div><div class="k">C</div><div class="k">V</div><div class="k">B</div><div class="k">N</div><div class="k">M</div><div class="k sp">⌫</div></div>
+      <div class="kb-bot"><div class="k sp" style="max-width:none;flex:1.2;">123</div><div class="k sp" style="max-width:none;flex:1.2;"><i class="ph ph-smiley" style="font-size:16px;"></i></div><div class="k spc">space</div><div class="k done">done</div></div>
+      <div style="padding:5px 6px 3px;display:flex;justify-content:space-between;"><i class="ph ph-globe" style="font-size:20px;color:#555;"></i><i class="ph ph-microphone" style="font-size:20px;color:#555;"></i></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S12 · Map pin drop -->
+<div class="pw">
+<div class="slbl">12 · Confirm Pin</div>
+<div class="phone" style="position:relative;">
+  <div class="sb sb-d" style="position:relative;z-index:6;"><span class="sb-t">2:10</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <!-- Google Map -->
+  <div class="route-map" style="flex:1;position:relative;">
+    <div id="map-s12" style="position:absolute;inset:0;z-index:1;"></div>
+    <div class="rm-back" style="z-index:10;"><i class="ph-bold ph-arrow-left" style="font-size:18px;color:#111;"></i></div>
+    <div class="rm-locate" style="z-index:10;"><i class="ph ph-navigation-arrow" style="font-size:16px;color:#555;"></i></div>
+  </div>
+  <!-- Bottom sheet skeleton -->
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 16px;box-shadow:0 -4px 24px rgba(0,0,0,.08);">
+    <div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 12px;"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+      <div style="width:55%;height:14px;background:#eee;border-radius:6px;"></div>
+      <i class="ph ph-magnifying-glass" style="font-size:20px;color:#bbb;"></i>
+    </div>
+    <div style="width:40%;height:11px;background:#f5f5f5;border-radius:5px;margin-bottom:14px;"></div>
+    <div style="width:100%;height:44px;background:#f5f5f5;border-radius:20px;"></div>
+  </div>
+</div>
+</div>
+
+<!-- S13 · Destination Confirmed -->
+<div class="pw">
+<div class="slbl">13 · Destination Set</div>
+<div class="phone" style="position:relative;">
+  <!-- Full-screen map -->
+  <div class="route-map" style="flex:1;position:relative;z-index:1;">
+    <div id="map-s13" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;"></div>
+  </div>
+
+  <!-- Status bar overlay -->
+  <div class="sb sb-d" style="position:absolute;top:0;left:0;right:0;z-index:20;"><span class="sb-t">2:10</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+
+  <!-- Floating top destination card -->
+  <div style="position:absolute;top:42px;left:12px;right:12px;z-index:20;background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;">
+    <div class="bk" style="width:28px;height:28px;"><i class="ph-bold ph-arrow-left" style="font-size:18px;color:#111;"></i></div>
+    <div style="font-size:14px;font-weight:600;color:#111;flex:1;">O.R. Tambo International Airport</div>
+    <i class="ph-bold ph-plus" style="font-size:18px;color:#555;"></i>
+  </div>
+
+  <!-- ETA badge -->
+  <div class="eta-badge" style="position:absolute;top:38%;left:52%;z-index:15;">3 min</div>
+
+  <!-- Locate btn -->
+  <div class="rm-locate" style="position:absolute;bottom:140px;right:12px;z-index:15;"><i class="ph ph-navigation-arrow" style="font-size:16px;color:#555;"></i></div>
+
+  <!-- Bottom destination sheet -->
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:20;background:#fff;border-radius:20px 20px 0 0;padding:14px 16px 20px;box-shadow:0 -4px 24px rgba(0,0,0,.08);">
+    <div style="width:36px;height:4px;background:#e0e0e0;border-radius:2px;margin:0 auto 12px;"></div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:16px;font-weight:700;color:#111;line-height:1.3;margin-bottom:6px;">O.R. Tambo International Airport (JNB)</div>
+        <div style="font-size:13px;color:#777;line-height:1.4;margin-bottom:8px;">Jones Rd, Kempton Park, Johannesburg</div>
+        <div style="font-size:13px;color:#555;font-weight:500;">Sift <span style="color:#111;font-weight:700;">R189.00</span></div>
+      </div>
+      <i class="ph ph-magnifying-glass" style="font-size:20px;color:#ccc;margin-top:2px;flex-shrink:0;margin-left:8px;"></i>
+    </div>
+    <button class="btn" style="width:100%;margin:0;">Confirm destination</button>
+  </div>
+</div>
+</div>
+
+<!-- S14 · Ride Selection -->
+<div class="pw">
+<div class="slbl">14 · Choose Ride</div>
+<div class="phone" style="position:relative;">
+  <!-- Full-screen map -->
+  <div class="route-map" style="flex:1;position:relative;z-index:1;">
+    <div id="map-s14" style="position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;"></div>
+  </div>
+
+  <!-- Status bar overlay -->
+  <div class="sb sb-d" style="position:absolute;top:0;left:0;right:0;z-index:20;"><span class="sb-t">2:10</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+
+  <!-- Floating top destination card -->
+  <div style="position:absolute;top:42px;left:12px;right:12px;z-index:20;background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.12);display:flex;align-items:center;gap:10px;">
+    <div class="bk" style="width:28px;height:28px;"><i class="ph-bold ph-arrow-left" style="font-size:18px;color:#111;"></i></div>
+    <div style="font-size:14px;font-weight:600;color:#111;flex:1;">O.R. Tambo International Airport</div>
+    <i class="ph-bold ph-plus" style="font-size:18px;color:#555;"></i>
+  </div>
+  <!-- Tooltip -->
+  <div style="position:absolute;top:92px;left:12px;right:12px;z-index:20;background:rgba(20,20,20,.85);color:#fff;font-size:11px;padding:6px 12px;border-radius:8px;text-align:center;">Tap to edit locations</div>
+
+  <!-- ETA badge -->
+  <div class="eta-badge" style="position:absolute;top:38%;left:52%;z-index:15;">3 min</div>
+
+  <!-- Nearby car icons -->
+  <div style="position:absolute;bottom:22%;left:55%;z-index:15;"><i class="ph-bold ph-car" style="font-size:22px;color:#555;transform:rotate(-20deg);display:block;"></i></div>
+  <div class="rm-locate" style="position:absolute;bottom:140px;right:12px;z-index:15;"><i class="ph ph-navigation-arrow" style="font-size:16px;color:#555;"></i></div>
+
+  <!-- Bottom sheet -->
+  <div class="bs" style="position:absolute;bottom:0;left:0;right:0;z-index:20;padding:8px 12px 12px;">
+    <div class="bs-handle"></div>
+    <!-- Ride cards -->
+    <div class="ride-card sel">
+      <div class="rc-icon sel-ic"><img src="sift screens/car_orange.png" alt="Sift"></div>
+      <div class="rc-info">
+        <div class="rc-name">Sift</div>
+        <div class="rc-meta"><i class="ph ph-clock" style="font-size:12px;"></i> 3 min &nbsp;<i class="ph ph-user" style="font-size:12px;"></i> 4</div>
+      </div>
+      <div class="rc-price">R189</div>
+    </div>
+    <div class="ride-card">
+      <div class="rc-icon"><img src="sift screens/car_green.png" alt="Comfort"></div>
+      <div class="rc-info">
+        <div class="rc-name">Comfort</div>
+        <div class="rc-meta"><i class="ph ph-clock" style="font-size:12px;"></i> 5 min &nbsp;<i class="ph ph-user" style="font-size:12px;"></i> 4</div>
+      </div>
+      <div class="rc-price">R245</div>
+    </div>
+    <div class="ride-card">
+      <div class="rc-icon"><img src="sift screens/car_orange.png" alt="XL" style="filter:brightness(.85) saturate(0.9);"></div>
+      <div class="rc-info">
+        <div class="rc-name">XL</div>
+        <div class="rc-meta"><i class="ph ph-clock" style="font-size:12px;"></i> 4 min &nbsp;<i class="ph ph-user" style="font-size:12px;"></i> 6</div>
+      </div>
+      <div class="rc-price">R280</div>
+    </div>
+    <!-- Footer -->
+    <div class="sel-footer">
+      <div class="pay-method">
+        <i class="ph-bold ph-apple-logo" style="font-size:16px;color:#555;"></i>
+        <div style="flex:1;font-size:12px;color:#555;">Apple Pay &nbsp;<i class="ph ph-caret-down" style="font-size:11px;"></i></div>
+        <div style="font-size:11px;color:#bbb;">Personal trip</div>
+      </div>
+      <div class="sel-btns">
+        <button class="sel-btn-main">Select Sift</button>
+        <button class="sel-btn-sched"><i class="ph-bold ph-calendar-clock" style="font-size:22px;"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S15 · All Ride Types -->
+<div class="pw">
+<div class="slbl">15 · All Ride Types</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:10</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <!-- Map peek -->
+  <div style="height:80px;overflow:hidden;position:relative;background:linear-gradient(135deg,#ddf0e8,#e8f5ee);">
+    <div style="position:absolute;top:8px;left:12px;background:#fff;border-radius:14px;padding:8px 12px;box-shadow:0 2px 8px rgba(0,0,0,.12);display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:#111;">
+      <i class="ph-bold ph-arrow-left" style="font-size:16px;"></i>
+      O.R. Tambo International Airport
+      <i class="ph-bold ph-plus" style="font-size:16px;"></i>
+    </div>
+  </div>
+  <!-- Ride list -->
+  <div style="flex:1;overflow:hidden;">
+    <div class="rl-item sel">
+      <div class="rl-ic"><img src="sift screens/car_orange.png" alt="Sift"></div>
+      <div class="rl-info"><div class="rl-name" style="color:var(--o);">Sift</div><div class="rl-meta"><i class="ph ph-clock"></i> 3 min &nbsp;<i class="ph ph-user"></i> 4</div></div>
+      <div class="rl-price" style="color:var(--o);">R189</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic"><img src="sift screens/car_green.png" alt="Comfort"></div>
+      <div class="rl-info"><div class="rl-name">Comfort</div><div class="rl-meta"><i class="ph ph-clock"></i> 5 min &nbsp;<i class="ph ph-user"></i> 4</div></div>
+      <div class="rl-price">R245</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic"><img src="sift screens/car_orange.png" alt="XL" style="filter:brightness(.85) saturate(.9);"></div>
+      <div class="rl-info"><div class="rl-name">XL</div><div class="rl-meta"><i class="ph ph-clock"></i> 4 min &nbsp;<i class="ph ph-user"></i> 6</div></div>
+      <div class="rl-price">R280</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic" style="position:relative;">
+        <img src="sift screens/car_green.png" alt="Electric" style="filter:hue-rotate(160deg) saturate(1.2);">
+        <div style="position:absolute;top:-2px;left:-2px;width:18px;height:18px;background:var(--o);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-lightning" style="font-size:10px;color:#fff;"></i></div>
+      </div>
+      <div class="rl-info"><div class="rl-name">Electric</div><div class="rl-meta"><i class="ph ph-clock"></i> 6 min &nbsp;<i class="ph ph-user"></i> 4</div></div>
+      <div class="rl-price">R189</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic"><img src="sift screens/car_orange.png" alt="Executive" style="filter:brightness(.6) sepia(.3);"></div>
+      <div class="rl-info"><div class="rl-name">Executive</div><div class="rl-meta"><i class="ph ph-clock"></i> 7 min &nbsp;<i class="ph ph-user"></i> 4</div></div>
+      <div class="rl-price">R340</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic" style="position:relative;">
+        <img src="sift screens/car_green.png" alt="Pet Friendly">
+        <div style="position:absolute;top:-2px;left:-2px;width:18px;height:18px;background:var(--o);border-radius:50%;display:flex;align-items:center;justify-content:center;"><i class="ph-bold ph-paw-print" style="font-size:10px;color:#fff;"></i></div>
+      </div>
+      <div class="rl-info"><div class="rl-name">Pet Friendly</div><div class="rl-meta"><i class="ph ph-clock"></i> 4 min &nbsp;<i class="ph ph-user"></i> 3</div></div>
+      <div class="rl-price">R210</div>
+    </div>
+    <div class="rl-item">
+      <div class="rl-ic"><img src="sift screens/car_orange.png" alt="Luxury" style="filter:brightness(.5) sepia(.6) hue-rotate(200deg);"></div>
+      <div class="rl-info"><div class="rl-name">Luxury</div><div class="rl-meta"><i class="ph ph-clock"></i> 8 min &nbsp;<i class="ph ph-user"></i> 4</div></div>
+      <div class="rl-price">R580</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- S16 · Payment -->
+<div class="pw">
+<div class="slbl">16 · Payment</div>
+<div class="phone">
+  <div class="sb sb-d"><span class="sb-t">2:11</span><div class="sb-r"><i class="ph ph-navigation-arrow" style="font-size:12px;color:#007aff;"></i><svg width="25" height="12" viewBox="0 0 25 12"><rect x="0" y="1" width="21" height="10" rx="2" fill="none" stroke="#111" stroke-width="1.2"/><rect x="1.5" y="2.5" width="15" height="7" rx="1" fill="#111"/><rect x="22" y="4" width="2.5" height="4" rx="1" fill="#111"/></svg></div></div>
+  <div class="sc" style="background:#f5f5f5;">
+    <!-- Map peek strip -->
+    <div style="height:40px;background:linear-gradient(135deg,#ddf0e8,#e8f5ee);flex-shrink:0;"></div>
+    <!-- White card -->
+    <div style="background:#fff;border-radius:16px 16px 0 0;flex:1;overflow:hidden;margin-top:-8px;">
+      <div style="display:flex;align-items:center;justify-content:flex-end;padding:12px 20px 0;">
+        <button class="pmt-done">Done</button>
+      </div>
+      <div style="font-size:22px;font-weight:700;color:#111;padding:4px 20px 14px;">Payment</div>
+      <!-- Balance card -->
+      <div class="pmt-balance">
+        <div class="pmt-bal-lbl">Sift balance</div>
+        <div class="pmt-bal-amt">R0</div>
+      </div>
+      <!-- Balance actions -->
+      <div style="background:#fff;border-radius:12px;margin:8px 20px;overflow:hidden;border:1px solid #f0f0f0;">
+        <div class="pmt-row">
+          <div class="pmt-row-ic"><i class="ph ph-question" style="font-size:18px;color:#555;"></i></div>
+          <div class="pmt-row-lbl">What is Sift balance?</div>
+          <div class="pmt-row-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div>
+        </div>
+        <div class="pmt-row" style="border-bottom:none;">
+          <div class="pmt-row-ic"><i class="ph ph-clock-counter-clockwise" style="font-size:18px;color:#555;"></i></div>
+          <div class="pmt-row-lbl">See Sift balance transactions</div>
+          <div class="pmt-row-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div>
+        </div>
+      </div>
+      <!-- Payment methods -->
+      <div class="pmt-section">Payment methods</div>
+      <div style="background:#fff;border-radius:12px;margin:0 20px;overflow:hidden;border:1px solid #f0f0f0;">
+        <div class="pmt-row">
+          <div class="pmt-row-ic"><i class="ph-bold ph-apple-logo" style="font-size:18px;"></i></div>
+          <div class="pmt-row-lbl">Apple Pay</div>
+          <div class="pmt-check"><i class="ph-bold ph-check" style="font-size:16px;color:#fff;"></i></div>
+        </div>
+        <div class="pmt-row" style="border-bottom:none;">
+          <div class="pmt-row-ic"><i class="ph ph-plus" style="font-size:18px;color:#555;"></i></div>
+          <div class="pmt-row-lbl">Add debit/credit card</div>
+          <div class="pmt-row-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div>
+        </div>
+      </div>
+      <!-- Work profile -->
+      <div style="background:#fff;border-radius:12px;margin:8px 20px;overflow:hidden;border:1px solid #f0f0f0;">
+        <div class="pmt-row" style="border-bottom:none;">
+          <div class="pmt-row-ic"><i class="ph ph-briefcase" style="font-size:18px;color:#555;"></i></div>
+          <div class="pmt-row-lbl">Set up work profile</div>
+          <div class="pmt-row-chev"><i class="ph ph-caret-right" style="font-size:18px;color:#ccc;"></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- end main app row -->
+
+<script>
+window.addEventListener('load', function() {
+  try {
+    function initMap(id, center, zoom) {
+      var el = document.getElementById(id);
+      if(!el) return null;
+      var map = L.map(id, {
+        center: center,
+        zoom: zoom,
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false
+      });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '', subdomains: 'abcd', maxZoom: 20
+      }).addTo(map);
+      setTimeout(function(){ map.invalidateSize(); }, 300);
+      return map;
+    }
+
+    var userIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:16px;height:16px;background:#fe7c20;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 5px rgba(254,124,32,.25),0 2px 8px rgba(0,0,0,.3);"></div>',
+      iconSize: [16,16], iconAnchor: [8,8]
+    });
+    var originIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:14px;height:14px;background:#7b7eff;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>',
+      iconSize: [14,14], iconAnchor: [7,7]
+    });
+    var destIcon = L.divIcon({
+      className: '',
+      html: '<div style="width:16px;height:16px;background:#fe7c20;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.3);"></div>',
+      iconSize: [16,16], iconAnchor: [8,8]
+    });
+    var carHtml = '<img src="sift screens/car.png" style="width:26px;height:26px;object-fit:contain;transform:rotate(-20deg);filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));">';
+    var carIcon = L.divIcon({ className:'', html: carHtml, iconSize:[26,26], iconAnchor:[13,13] });
+
+    // Realistic route waypoints (Sandton -> OR Tambo via M1/N1)
+    var routeWaypoints = [
+      [-26.1076, 28.0567],
+      [-26.1080, 28.0630],
+      [-26.1090, 28.0720],
+      [-26.1120, 28.0820],
+      [-26.1170, 28.0920],
+      [-26.1220, 28.1050],
+      [-26.1260, 28.1200],
+      [-26.1290, 28.1400],
+      [-26.1300, 28.1600],
+      [-26.1310, 28.1800],
+      [-26.1320, 28.2000],
+      [-26.1325, 28.2200],
+      [-26.1333, 28.2333]
+    ];
+    var routeLine = {color: '#7b7eff', weight: 4, opacity: 0.9};
+
+    // S10 - Home
+    var map10 = initMap('sift-map', [-26.1076, 28.0567], 14);
+    L.marker([-26.1076, 28.0567], {icon: userIcon}).addTo(map10);
+    L.marker([-26.1045, 28.0595], {icon: carIcon}).addTo(map10);
+    L.marker([-26.1095, 28.0545], {icon: carIcon}).addTo(map10);
+    L.marker([-26.1065, 28.0615], {icon: carIcon}).addTo(map10);
+
+    // S12 - Confirm Pin
+    var map12 = initMap('map-s12', [-26.1076, 28.0567], 14);
+    L.marker([-26.1076, 28.0567], {icon: userIcon}).addTo(map12);
+
+    // S13 - Destination Set (Sandton -> OR Tambo)
+    var map13 = initMap('map-s13', [-26.12, 28.14], 11);
+    L.marker([-26.1076, 28.0567], {icon: originIcon}).addTo(map13);
+    L.marker([-26.1333, 28.2333], {icon: destIcon}).addTo(map13);
+    L.polyline(routeWaypoints, routeLine).addTo(map13);
+
+    // S14 - Choose Ride
+    var map14 = initMap('map-s14', [-26.12, 28.14], 11);
+    L.marker([-26.1076, 28.0567], {icon: originIcon}).addTo(map14);
+    L.marker([-26.1333, 28.2333], {icon: destIcon}).addTo(map14);
+    L.polyline(routeWaypoints, routeLine).addTo(map14);
+    L.marker([-26.0950, 28.0700], {icon: carIcon}).addTo(map14);
+    L.marker([-26.1150, 28.0450], {icon: carIcon}).addTo(map14);
+  } catch(e) {}
+});
+</script>
+</body>
+</html>
